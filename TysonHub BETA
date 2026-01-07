@@ -1,0 +1,245 @@
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local localPlayer = Players.LocalPlayer
+
+---------------------------------------------------
+-- SETTINGS (LIVE CONTROLLED)
+---------------------------------------------------
+local ESP_ENABLED = true
+local SHOW_NAMES = true
+local MAX_DISTANCE = 150
+
+local BAR_OFFSET = Vector3.new(0, 3.5, 0)
+local BAR_SIZE = UDim2.fromScale(6, 0.7)
+local TWEEN_TIME = 0.12
+
+---------------------------------------------------
+-- STORAGE
+---------------------------------------------------
+local bars = {}
+
+---------------------------------------------------
+-- SCREEN GUI
+---------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Name = "TysonHub"
+gui.ResetOnSpawn = false
+gui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+---------------------------------------------------
+-- MAIN PANEL
+---------------------------------------------------
+local panel = Instance.new("Frame")
+panel.Size = UDim2.fromOffset(260, 180)
+panel.Position = UDim2.fromScale(0.4, 0.35)
+panel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+panel.BorderSizePixel = 0
+panel.Visible = true
+panel.Parent = gui
+
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0.05, 0)
+Instance.new("UIStroke", panel).Thickness = 2
+
+---------------------------------------------------
+-- TITLE BAR
+---------------------------------------------------
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+title.Text = "Tyson Hub"
+title.Font = Enum.Font.Arcade
+title.TextSize = 16
+title.TextColor3 = Color3.new(1,1,1)
+title.BorderSizePixel = 0
+title.Parent = panel
+
+---------------------------------------------------
+-- DRAGGING
+---------------------------------------------------
+local dragging, dragStart, startPos
+
+title.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = panel.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		panel.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+---------------------------------------------------
+-- HELPER: TOGGLE BUTTON
+---------------------------------------------------
+local function createToggle(text, yPos, default)
+	local label = Instance.new("TextLabel")
+	label.Text = text
+	label.Font = Enum.Font.Arcade
+	label.TextSize = 14
+	label.TextColor3 = Color3.new(1,1,1)
+	label.BackgroundTransparency = 1
+	label.Position = UDim2.fromOffset(12, yPos)
+	label.Size = UDim2.fromOffset(120, 24)
+	label.Parent = panel
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.fromOffset(24, 24)
+	btn.Position = UDim2.fromOffset(200, yPos)
+	btn.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+	btn.Text = ""
+	btn.Parent = panel
+	Instance.new("UICorner", btn)
+
+	return btn
+end
+
+---------------------------------------------------
+-- TOGGLES
+---------------------------------------------------
+local visionBtn = createToggle("Vision", 45, true)
+local nameBtn = createToggle("Names", 110, true)
+
+visionBtn.MouseButton1Click:Connect(function()
+	ESP_ENABLED = not ESP_ENABLED
+	visionBtn.BackgroundColor3 = ESP_ENABLED and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+end)
+
+nameBtn.MouseButton1Click:Connect(function()
+	SHOW_NAMES = not SHOW_NAMES
+	nameBtn.BackgroundColor3 = SHOW_NAMES and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+end)
+
+---------------------------------------------------
+-- DISTANCE BOX
+---------------------------------------------------
+local distLabel = Instance.new("TextLabel")
+distLabel.Text = "Distance"
+distLabel.Font = Enum.Font.Arcade
+distLabel.TextSize = 14
+distLabel.TextColor3 = Color3.new(1,1,1)
+distLabel.BackgroundTransparency = 1
+distLabel.Position = UDim2.fromOffset(12, 78)
+distLabel.Size = UDim2.fromOffset(120, 24)
+distLabel.Parent = panel
+
+local distBox = Instance.new("TextBox")
+distBox.Text = tostring(MAX_DISTANCE)
+distBox.Font = Enum.Font.Arcade
+distBox.TextSize = 14
+distBox.TextColor3 = Color3.new(1,1,1)
+distBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+distBox.Size = UDim2.fromOffset(80, 24)
+distBox.Position = UDim2.fromOffset(170, 78)
+distBox.ClearTextOnFocus = false
+distBox.Parent = panel
+
+Instance.new("UICorner", distBox)
+
+distBox.FocusLost:Connect(function()
+	local val = tonumber(distBox.Text)
+	if val then
+		MAX_DISTANCE = math.clamp(val, 10, 1000)
+		distBox.Text = tostring(MAX_DISTANCE)
+	end
+end)
+
+---------------------------------------------------
+-- RIGHT CTRL TOGGLE
+---------------------------------------------------
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.RightControl then
+		panel.Visible = not panel.Visible
+	end
+end)
+
+---------------------------------------------------
+-- ESP LOGIC (UNCHANGED CORE)
+---------------------------------------------------
+local function createHealthBar(player, character)
+	if player == localPlayer or bars[player] then return end
+
+	local humanoid = character:WaitForChild("Humanoid")
+	local root = character:WaitForChild("HumanoidRootPart")
+
+	local highlight = Instance.new("Highlight")
+	highlight.Adornee = character
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0.3
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Parent = character
+
+	local gui = Instance.new("BillboardGui")
+	gui.Adornee = root
+	gui.Size = BAR_SIZE
+	gui.StudsOffsetWorldSpace = BAR_OFFSET
+	gui.AlwaysOnTop = true
+	gui.Parent = root
+
+	local bg = Instance.new("Frame", gui)
+	bg.Size = UDim2.fromScale(1,1)
+	bg.BackgroundColor3 = Color3.fromRGB(20,20,20)
+	Instance.new("UICorner", bg)
+
+	local bar = Instance.new("Frame", bg)
+	bar.BackgroundColor3 = Color3.fromRGB(0,255,0)
+	bar.Size = UDim2.fromScale(1,1)
+	Instance.new("UICorner", bar)
+
+	local text = Instance.new("TextLabel", bg)
+	text.BackgroundTransparency = 1
+	text.Size = UDim2.fromScale(1,1)
+	text.Font = Enum.Font.Arcade
+	text.TextScaled = true
+	text.TextColor3 = Color3.new(1,1,1)
+	text.TextStrokeTransparency = 0
+
+	bars[player] = {gui=gui, bar=bar, text=text, humanoid=humanoid, root=root, highlight=highlight}
+end
+
+RunService.RenderStepped:Connect(function()
+	local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	for _, d in pairs(bars) do
+		local dist = (root.Position - d.root.Position).Magnitude
+		local show = ESP_ENABLED and dist <= MAX_DISTANCE
+
+		d.gui.Enabled = show
+		d.highlight.Enabled = show
+
+		local hp = d.humanoid.Health
+		local max = d.humanoid.MaxHealth
+		local pct = hp / max
+
+		d.text.Text = SHOW_NAMES and d.root.Parent.Name .. " " .. math.floor(pct*100).."%" or math.floor(pct*100).."%"
+		d.bar.Size = UDim2.fromScale(pct,1)
+	end
+end)
+
+for _, p in ipairs(Players:GetPlayers()) do
+	if p ~= localPlayer then
+		p.CharacterAdded:Connect(function(c) createHealthBar(p,c) end)
+		if p.Character then createHealthBar(p,p.Character) end
+	end
+end
