@@ -7,15 +7,25 @@ local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 
 ---------------------------------------------------
--- SETTINGS (LIVE CONTROLLED)
+-- SETTINGS (LIVE)
 ---------------------------------------------------
 local ESP_ENABLED = true
 local SHOW_NAMES = true
-local MAX_RANGE = 150
+local SHOW_DISTANCE = false
+local MAX_DISTANCE = 150
 
 local BAR_OFFSET = Vector3.new(0, 3.5, 0)
-local BAR_SIZE = UDim2.fromScale(6, 0.7)
+local NAME_OFFSET = Vector3.new(0, 4.25, 0)
+local DIST_OFFSET = Vector3.new(0, -3.2, 0)
+
+local BAR_SIZE = UDim2.fromScale(6, 0.55) -- thinner bar
+local FONT = Enum.Font.GothamBold
 local TWEEN_TIME = 0.12
+
+-- TEXT READABILITY SETTINGS
+local NAME_TEXT_SIZE = 18
+local DIST_TEXT_SIZE = 16
+local MAX_READABLE_DISTANCE = 300
 
 ---------------------------------------------------
 -- STORAGE
@@ -31,27 +41,26 @@ gui.ResetOnSpawn = false
 gui.Parent = localPlayer:WaitForChild("PlayerGui")
 
 ---------------------------------------------------
--- MAIN PANEL
+-- PANEL
 ---------------------------------------------------
 local panel = Instance.new("Frame")
-panel.Size = UDim2.fromOffset(260, 180)
+panel.Size = UDim2.fromOffset(260, 210)
 panel.Position = UDim2.fromScale(0.4, 0.35)
 panel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 panel.BorderSizePixel = 0
-panel.Visible = true
 panel.Parent = gui
 
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0.05, 0)
 Instance.new("UIStroke", panel).Thickness = 2
 
 ---------------------------------------------------
--- TITLE BAR
+-- TITLE
 ---------------------------------------------------
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.Text = "Tyson Hub"
-title.Font = Enum.Font.GothamBold
+title.Text = "TYSON HUB"
+title.Font = FONT
 title.TextSize = 16
 title.TextColor3 = Color3.new(1,1,1)
 title.BorderSizePixel = 0
@@ -89,35 +98,36 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 ---------------------------------------------------
--- HELPER: TOGGLE BUTTON
+-- TOGGLE CREATOR
 ---------------------------------------------------
 local function createToggle(text, yPos, default)
 	local label = Instance.new("TextLabel")
 	label.Text = text
-	label.Font = Enum.Font.GothamBold
+	label.Font = FONT
 	label.TextSize = 14
 	label.TextColor3 = Color3.new(1,1,1)
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.fromOffset(12, yPos)
-	label.Size = UDim2.fromOffset(120, 24)
+	label.Size = UDim2.fromOffset(140, 24)
 	label.Parent = panel
 
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.fromOffset(24, 24)
-	btn.Position = UDim2.fromOffset(200, yPos)
+	btn.Position = UDim2.fromOffset(210, yPos)
 	btn.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
 	btn.Text = ""
 	btn.Parent = panel
-	Instance.new("UICorner", btn)
 
+	Instance.new("UICorner", btn)
 	return btn
 end
 
 ---------------------------------------------------
 -- TOGGLES
 ---------------------------------------------------
-local visionBtn = createToggle("Vision", 45, true)
-local nameBtn = createToggle("Names", 110, true)
+local visionBtn = createToggle("VISION", 45, true)
+local nameBtn = createToggle("NAMES", 75, true)
+local distBtn = createToggle("DISTANCE", 105, false)
 
 visionBtn.MouseButton1Click:Connect(function()
 	ESP_ENABLED = not ESP_ENABLED
@@ -129,42 +139,47 @@ nameBtn.MouseButton1Click:Connect(function()
 	nameBtn.BackgroundColor3 = SHOW_NAMES and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
 end)
 
+distBtn.MouseButton1Click:Connect(function()
+	SHOW_DISTANCE = not SHOW_DISTANCE
+	distBtn.BackgroundColor3 = SHOW_DISTANCE and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+end)
+
 ---------------------------------------------------
--- RANGE BOX
+-- RANGE INPUT
 ---------------------------------------------------
-local distLabel = Instance.new("TextLabel")
-distLabel.Text = "RANGE"
-distLabel.Font = Enum.Font.GothamBold
-distLabel.TextSize = 14
-distLabel.TextColor3 = Color3.new(1,1,1)
-distLabel.BackgroundTransparency = 1
-distLabel.Position = UDim2.fromOffset(12, 78)
-distLabel.Size = UDim2.fromOffset(120, 24)
-distLabel.Parent = panel
+local rangeLabel = Instance.new("TextLabel")
+rangeLabel.Text = "RANGE"
+rangeLabel.Font = FONT
+rangeLabel.TextSize = 14
+rangeLabel.TextColor3 = Color3.new(1,1,1)
+rangeLabel.BackgroundTransparency = 1
+rangeLabel.Position = UDim2.fromOffset(12, 145)
+rangeLabel.Size = UDim2.fromOffset(120, 24)
+rangeLabel.Parent = panel
 
-local distBox = Instance.new("TextBox")
-distBox.Text = tostring(MAX_RANGE)
-distBox.Font = Enum.Font.GothamBold
-distBox.TextSize = 14
-distBox.TextColor3 = Color3.new(1,1,1)
-distBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
-distBox.Size = UDim2.fromOffset(80, 24)
-distBox.Position = UDim2.fromOffset(170, 78)
-distBox.ClearTextOnFocus = false
-distBox.Parent = panel
+local rangeBox = Instance.new("TextBox")
+rangeBox.Text = tostring(MAX_DISTANCE)
+rangeBox.Font = FONT
+rangeBox.TextSize = 14
+rangeBox.TextColor3 = Color3.new(1,1,1)
+rangeBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+rangeBox.Size = UDim2.fromOffset(80, 24)
+rangeBox.Position = UDim2.fromOffset(170, 145)
+rangeBox.ClearTextOnFocus = false
+rangeBox.Parent = panel
 
-Instance.new("UICorner", distBox)
+Instance.new("UICorner", rangeBox)
 
-distBox.FocusLost:Connect(function()
-	local val = tonumber(distBox.Text)
+rangeBox.FocusLost:Connect(function()
+	local val = tonumber(rangeBox.Text)
 	if val then
-		MAX_RANGE = math.clamp(val, 10, 1000)
-		distBox.Text = tostring(MAX_RANGE)
+		MAX_DISTANCE = math.clamp(val, 10, 1000)
+		rangeBox.Text = tostring(MAX_DISTANCE)
 	end
 end)
 
 ---------------------------------------------------
--- RIGHT CTRL TOGGLE
+-- RIGHT CTRL MENU TOGGLE
 ---------------------------------------------------
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
@@ -174,83 +189,153 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 ---------------------------------------------------
--- ESP LOGIC (UNCHANGED CORE)
+-- ESP CREATION
 ---------------------------------------------------
-local function createHealthBar(player, character)
+local function createESP(player, character)
 	if player == localPlayer or bars[player] then return end
 
 	local humanoid = character:WaitForChild("Humanoid")
 	local root = character:WaitForChild("HumanoidRootPart")
 
+	-- OUTLINE
 	local highlight = Instance.new("Highlight")
 	highlight.Adornee = character
 	highlight.FillTransparency = 1
 	highlight.OutlineTransparency = 0.3
+	highlight.OutlineColor = Color3.new(1,1,1)
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Parent = character
 
-	local gui = Instance.new("BillboardGui")
-	gui.Adornee = root
-	gui.Size = BAR_SIZE
-	gui.StudsOffsetWorldSpace = BAR_OFFSET
-	gui.AlwaysOnTop = true
-	gui.Parent = root
+	-- NAME
+	local nameGui = Instance.new("BillboardGui")
+	nameGui.Adornee = root
+	nameGui.Size = UDim2.fromScale(6, 0.6)
+	nameGui.StudsOffsetWorldSpace = NAME_OFFSET
+	nameGui.AlwaysOnTop = true
+	nameGui.Parent = root
 
-	local bg = Instance.new("Frame", gui)
+	local nameText = Instance.new("TextLabel", nameGui)
+	nameText.Size = UDim2.fromScale(1,1)
+	nameText.BackgroundTransparency = 1
+	nameText.Font = FONT
+	nameText.TextScaled = false
+	nameText.TextSize = NAME_TEXT_SIZE
+	nameText.TextWrapped = false
+	nameText.TextColor3 = Color3.new(1,1,1)
+	nameText.TextStrokeTransparency = 0
+	nameGui.SizeOffset = Vector2.new(0, 0)
+	nameGui.Size = UDim2.fromOffset(180, 24)
+
+	-- HEALTH BAR
+	local barGui = Instance.new("BillboardGui")
+	barGui.Adornee = root
+	barGui.Size = BAR_SIZE
+	barGui.StudsOffsetWorldSpace = BAR_OFFSET
+	barGui.AlwaysOnTop = true
+	barGui.Parent = root
+
+	local bg = Instance.new("Frame", barGui)
 	bg.Size = UDim2.fromScale(1,1)
 	bg.BackgroundColor3 = Color3.fromRGB(20,20,20)
-	-- Instance.new("UICorner", bg)
 
 	local bar = Instance.new("Frame", bg)
-	bar.BackgroundColor3 = Color3.fromRGB(0,255,0)
 	bar.Size = UDim2.fromScale(1,1)
-	-- Instance.new("UICorner", bar)
+	bar.BackgroundColor3 = Color3.fromRGB(0,255,0)
 
-	local text = Instance.new("TextLabel", bg)
-	text.BackgroundTransparency = 1
-	text.Size = UDim2.fromScale(1,1)
-	text.Font = Enum.Font.GothamBold
-	text.TextScaled = true
-	text.TextColor3 = Color3.new(1,1,1)
-	text.TextStrokeTransparency = 0
+	local hpText = Instance.new("TextLabel", bg)
+	hpText.Size = UDim2.fromScale(1,1)
+	hpText.BackgroundTransparency = 1
+	hpText.Font = FONT
+	hpText.TextScaled = true
+	hpText.TextColor3 = Color3.new(1,1,1)
+	hpText.TextStrokeTransparency = 0
 
-	-- ADDED: Padding so text isn't glued to edges
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 6)
-	padding.PaddingRight = UDim.new(0, 6)
-	padding.Parent = text
+	local pad = Instance.new("UIPadding", hpText)
+	pad.PaddingLeft = UDim.new(0,6)
+	pad.PaddingRight = UDim.new(0,6)
 
-	bars[player] = {gui=gui, bar=bar, text=text, humanoid=humanoid, root=root, highlight=highlight}
+	-- DISTANCE
+	local distGui = Instance.new("BillboardGui")
+	distGui.Adornee = root
+	distGui.Size = UDim2.fromScale(4, 0.5)
+	distGui.StudsOffsetWorldSpace = DIST_OFFSET
+	distGui.AlwaysOnTop = true
+	distGui.Parent = root
+
+	local distText = Instance.new("TextLabel", distGui)
+	distText.Size = UDim2.fromScale(1,1)
+	distText.BackgroundTransparency = 1
+	distText.Font = FONT
+	distText.TextScaled = false
+	distText.TextSize = DIST_TEXT_SIZE
+	distText.TextWrapped = false
+	distText.TextColor3 = Color3.fromRGB(200,200,200)
+	distText.TextStrokeTransparency = 0
+	distGui.SizeOffset = Vector2.new(0, 0)
+	distGui.Size = UDim2.fromOffset(160, 22)
+
+	bars[player] = {
+		root = root,
+		humanoid = humanoid,
+		highlight = highlight,
+		bar = bar,
+		hpText = hpText,
+		nameText = nameText,
+		distText = distText,
+		guis = {nameGui, barGui, distGui},
+		lastHealth = humanoid.Health
+	}
 end
 
+---------------------------------------------------
+-- UPDATE LOOP
+---------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
+	local localRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not localRoot then return end
 
 	for _, d in pairs(bars) do
-		local dist = (root.Position - d.root.Position).Magnitude
-		local show = ESP_ENABLED and dist <= MAX_RANGE
+		local dist = (localRoot.Position - d.root.Position).Magnitude
+		local show = ESP_ENABLED and dist <= MAX_DISTANCE
 
-		d.gui.Enabled = show
+		for _, g in ipairs(d.guis) do
+			g.Enabled = show
+		end
 		d.highlight.Enabled = show
 
-		local hp = d.humanoid.Health
-		local max = d.humanoid.MaxHealth
-		local pct = hp / max
+		if not show then continue end
 
-		-- CHANGED: Health only, no name 
-	d.text.Text = string.format("%d / %d (%d%%)", 	
-		math.floor(d.humanoid.Health), 	
-		math.floor(d.humanoid.MaxHealth), 	
-		math.floor(pct * 100) 
-)
-		d.bar.Size = UDim2.fromScale(pct,1)
+		local hp = math.floor(d.humanoid.Health)
+		local max = math.floor(d.humanoid.MaxHealth)
+		local pct = math.clamp(hp / max, 0, 1)
+
+		d.nameText.Text = SHOW_NAMES and d.root.Parent.Name:upper() or ""
+		d.hpText.Text = string.format("%d / %d (%d%%)", hp, max, pct * 100)
+		d.distText.Text = SHOW_DISTANCE and string.format("[%d STUDS]", dist) or ""
+		-- Improve text readability at distance
+		local alpha = math.clamp(dist / MAX_READABLE_DISTANCE, 0, 1)
+		local stroke = 0.2 + (alpha * 0.6)
+
+		d.nameText.TextStrokeTransparency = stroke
+		d.distText.TextStrokeTransparency = stroke
+
+		if hp ~= d.lastHealth then
+			d.lastHealth = hp
+			TweenService:Create(
+				d.bar,
+				TweenInfo.new(TWEEN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{ Size = UDim2.fromScale(pct, 1) }
+			):Play()
+		end
 	end
 end)
 
+---------------------------------------------------
+-- PLAYER HANDLING
+---------------------------------------------------
 for _, p in ipairs(Players:GetPlayers()) do
 	if p ~= localPlayer then
-		p.CharacterAdded:Connect(function(c) createHealthBar(p,c) end)
-		if p.Character then createHealthBar(p,p.Character) end
+		p.CharacterAdded:Connect(function(c) createESP(p, c) end)
+		if p.Character then createESP(p, p.Character) end
 	end
 end
