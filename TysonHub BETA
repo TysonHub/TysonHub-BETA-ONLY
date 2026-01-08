@@ -199,12 +199,12 @@ local function createHealthBar(player, character)
 	local bg = Instance.new("Frame", gui)
 	bg.Size = UDim2.fromScale(1,1)
 	bg.BackgroundColor3 = Color3.fromRGB(20,20,20)
-	Instance.new("UICorner", bg)
+	-- Instance.new("UICorner", bg)
 
 	local bar = Instance.new("Frame", bg)
 	bar.BackgroundColor3 = Color3.fromRGB(0,255,0)
 	bar.Size = UDim2.fromScale(1,1)
-	Instance.new("UICorner", bar)
+	-- Instance.new("UICorner", bar)
 
 	local text = Instance.new("TextLabel", bg)
 	text.BackgroundTransparency = 1
@@ -213,6 +213,12 @@ local function createHealthBar(player, character)
 	text.TextScaled = true
 	text.TextColor3 = Color3.new(1,1,1)
 	text.TextStrokeTransparency = 0
+
+	-- ADDED: Padding so text isn't glued to edges
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+	padding.Parent = text
 
 	bars[player] = {gui=gui, bar=bar, text=text, humanoid=humanoid, root=root, highlight=highlight}
 end
@@ -232,7 +238,12 @@ RunService.RenderStepped:Connect(function()
 		local max = d.humanoid.MaxHealth
 		local pct = hp / max
 
-		d.text.Text = SHOW_NAMES and d.root.Parent.Name .. " " .. math.floor(pct*100).."%" or math.floor(pct*100).."%"
+		-- CHANGED: Health only, no name 
+	d.text.Text = string.format("%d / %d (%d%%)", 	
+		math.floor(d.humanoid.Health), 	
+		math.floor(d.humanoid.MaxHealth), 	
+		math.floor(pct * 100) 
+)
 		d.bar.Size = UDim2.fromScale(pct,1)
 	end
 end)
