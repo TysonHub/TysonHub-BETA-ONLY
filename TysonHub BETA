@@ -11,7 +11,7 @@ local localPlayer = Players.LocalPlayer
 ---------------------------------------------------
 local ESP_ENABLED = true
 local SHOW_NAMES = true
-local MAX_DISTANCE = 150
+local MAX_RANGE = 150
 
 local BAR_OFFSET = Vector3.new(0, 3.5, 0)
 local BAR_SIZE = UDim2.fromScale(6, 0.7)
@@ -51,7 +51,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.Text = "Tyson Hub"
-title.Font = Enum.Font.Arcade
+title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.TextColor3 = Color3.new(1,1,1)
 title.BorderSizePixel = 0
@@ -94,7 +94,7 @@ end)
 local function createToggle(text, yPos, default)
 	local label = Instance.new("TextLabel")
 	label.Text = text
-	label.Font = Enum.Font.Arcade
+	label.Font = Enum.Font.GothamBold
 	label.TextSize = 14
 	label.TextColor3 = Color3.new(1,1,1)
 	label.BackgroundTransparency = 1
@@ -130,11 +130,11 @@ nameBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------
--- DISTANCE BOX
+-- RANGE BOX
 ---------------------------------------------------
 local distLabel = Instance.new("TextLabel")
-distLabel.Text = "Distance"
-distLabel.Font = Enum.Font.Arcade
+distLabel.Text = "RANGE"
+distLabel.Font = Enum.Font.GothamBold
 distLabel.TextSize = 14
 distLabel.TextColor3 = Color3.new(1,1,1)
 distLabel.BackgroundTransparency = 1
@@ -143,8 +143,8 @@ distLabel.Size = UDim2.fromOffset(120, 24)
 distLabel.Parent = panel
 
 local distBox = Instance.new("TextBox")
-distBox.Text = tostring(MAX_DISTANCE)
-distBox.Font = Enum.Font.Arcade
+distBox.Text = tostring(MAX_RANGE)
+distBox.Font = Enum.Font.GothamBold
 distBox.TextSize = 14
 distBox.TextColor3 = Color3.new(1,1,1)
 distBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
@@ -158,8 +158,8 @@ Instance.new("UICorner", distBox)
 distBox.FocusLost:Connect(function()
 	local val = tonumber(distBox.Text)
 	if val then
-		MAX_DISTANCE = math.clamp(val, 10, 1000)
-		distBox.Text = tostring(MAX_DISTANCE)
+		MAX_RANGE = math.clamp(val, 10, 1000)
+		distBox.Text = tostring(MAX_RANGE)
 	end
 end)
 
@@ -209,7 +209,7 @@ local function createHealthBar(player, character)
 	local text = Instance.new("TextLabel", bg)
 	text.BackgroundTransparency = 1
 	text.Size = UDim2.fromScale(1,1)
-	text.Font = Enum.Font.Arcade
+	text.Font = Enum.Font.GothamBold
 	text.TextScaled = true
 	text.TextColor3 = Color3.new(1,1,1)
 	text.TextStrokeTransparency = 0
@@ -223,7 +223,7 @@ RunService.RenderStepped:Connect(function()
 
 	for _, d in pairs(bars) do
 		local dist = (root.Position - d.root.Position).Magnitude
-		local show = ESP_ENABLED and dist <= MAX_DISTANCE
+		local show = ESP_ENABLED and dist <= MAX_RANGE
 
 		d.gui.Enabled = show
 		d.highlight.Enabled = show
